@@ -1,30 +1,35 @@
 const mongose = require("mongoose");
+const bcrypt = require("bcrypt");
+const { genrateJwtToken, genrateJwtRefreshToken } = require("../utils/jwt");
 const user = require("../models/user");
 const resStatus = require("../utils/response.status");
+const Hash_Password = require("../utils/hash.password");
+const conString = require("../config/db.config");
 
 async function Register(request, response) {
   const { firstName, lastName, email, password } = request?.body;
   try {
-    await mongose.connect("mongodb://127.0.0.1:27017/movieDB");
+    await mongose.connect(conString);
     const isUserExist = await user.findOne({ email });
     if (!isUserExist) {
       const createdUser = await user.create({
         firstName,
         lastName,
         email,
-        password,
+        password: await Hash_Password(password),
       });
       return response
         .status(201)
         .json({ status: resStatus.SUCCESS, data: createdUser });
     } else {
-      return response.status(200).json({
+      return response.status(400).json({
         status: resStatus.FAIL,
         data: {},
         message: "Email address already in use.",
       });
     }
   } catch (err) {
+    console.log(err);
     return response.status(500).json({
       status: resStatus.ERROR,
       data: {},
@@ -32,6 +37,58 @@ async function Register(request, response) {
     });
   }
 }
-async function Login(request, response) {}
+async function Login(request, response) {
+  const { email, password } = request?.body;
+  try {
+    await mongose.connect(conString);
+    const isUserExist = await user.findOne({ email });
+    if (isUserExist) {
+      const user = {
+        firstName: isUserExist.firstName,
+        lastName: isUserExist.lastName,
+        email: isUserExist.email,
+        isAdmin: isUserExist.isAdmin,
+      };
 
-module.exports = { Register, Login };
+      const comparePassword = await bcrypt.compare(
+        password,
+        isUserExist.password
+      );
+      if (comparePassword) {
+        const token = genrateJwtToken(user);
+        const refToken = genrateJwtRefreshToken(user);
+        response.cookie("RefreshToken", refToken, {
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+        return response.status(200).json({
+          status: resStatus.SUCCESS,
+          message: "Logged in",
+          data: {
+            ...user,
+            token,
+          },
+        });
+      } else {
+        return response.status(400).json({
+          status: resStatus.FAIL,
+          message: "Your Creditials incorrect",
+          data: {},
+        });
+      }
+    } else {
+      return response.status(404).json({
+        status: resStatus.FAIL,
+        message: "This email address not registerd.",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+async function Logout(request, response) {
+  response.clearCookie("RefreshToken");
+  return response
+    .status(200)
+    .json({ status: resStatus.SUCCESS, message: "Logged out" });
+}
+module.exports = { Register, Login, Logout };

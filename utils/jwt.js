@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
 
-async function genrateJwt({ firstName, lastName, email }) {
-  const token = jwt.sign(
-    { firstName, lastName, email, watchlis: [], isAdmin: false },
-    process.env.JWT_SECRET,
-    { expiresIn: "30m" }
-  );
-
-  return token;
+function genrateJwtToken(user) {
+  return jwt.sign(user, process.env.JWT_SECRET, {
+    expiresIn: "30m",
+  });
 }
-
-module.exports = getJWT;
+function genrateJwtRefreshToken(user) {
+  return jwt.sign(user, process.env.JWT_REFRESH_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
+}
+module.exports = { genrateJwtToken, genrateJwtRefreshToken };
