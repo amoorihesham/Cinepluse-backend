@@ -4,12 +4,12 @@ const { genrateJwtToken, genrateJwtRefreshToken } = require('../utils/jwt');
 const user = require('../models/user');
 const resStatus = require('../utils/response.status');
 const Hash_Password = require('../utils/hash.password');
-const conString = require('../config/db.config');
+
 
 async function Register(request, response) {
 	const { firstName, lastName, email, password } = request?.body;
 	try {
-		await mongose.connect(conString);
+		await mongose.connect(process.env.DATABASE_CONNECTION_STRING);
 		const isUserExist = await user.findOne({ email });
 		if (!isUserExist) {
 			const createdUser = await user.create({
@@ -48,7 +48,7 @@ async function Register(request, response) {
 async function Login(request, response) {
 	const { email, password } = request?.body;
 	try {
-		await mongose.connect(conString);
+		await mongose.connect(process.env.DATABASE_CONNECTION_STRING);
 		const isUserExist = await user.findOne({ email });
 
 		if (isUserExist) {
