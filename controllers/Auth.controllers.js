@@ -5,7 +5,6 @@ const user = require('../models/user');
 const resStatus = require('../utils/response.status');
 const Hash_Password = require('../utils/hash.password');
 const conString = require('../config/db.config');
-const watchlist = require('../models/watchlist');
 
 async function Register(request, response) {
 	const { firstName, lastName, email, password } = request?.body;
@@ -51,10 +50,12 @@ async function Login(request, response) {
 	try {
 		await mongose.connect(conString);
 		const isUserExist = await user.findOne({ email });
+
 		if (isUserExist) {
 			const comparePassword = await bcrypt.compare(password, isUserExist.password);
 			if (comparePassword) {
 				const user = {
+					_id: isUserExist._id,
 					firstName: isUserExist.firstName,
 					lastName: isUserExist.lastName,
 					email: isUserExist.email,
@@ -93,6 +94,7 @@ async function Login(request, response) {
 }
 async function Logout(request, response) {
 	response.clearCookie('RefreshToken');
+
 	return response.status(200).json({ status: resStatus.SUCCESS, message: 'Logged out' });
 }
 module.exports = { Register, Login, Logout };
