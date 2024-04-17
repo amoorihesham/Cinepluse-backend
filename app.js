@@ -15,5 +15,5 @@ app.use('/api', Auth_Router);
 app.use('/api', verifyJWT, Watchlist_Route);
 
 app.listen(PORT, () => {
-	console.log('Server Running');
+	console.log('Server Running On Port:=> ', PORT);
 });
