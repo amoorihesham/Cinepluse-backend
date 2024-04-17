@@ -1,4 +1,4 @@
-const { default: mongoose } = require('mongoose');
+const mongoose = require('mongoose');
 const watchlist = require('../models/watchlist');
 const resStatus = require('../utils/response.status');
 
